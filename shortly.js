@@ -13,8 +13,10 @@ var Click = require('./app/models/click');
 
 var app = express();
 
+
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
+
 app.use(partials());
 // Parse JSON (uniform resource locators)
 app.use(bodyParser.json());
@@ -22,6 +24,15 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+// var checkUser = function(req, res, next) {
+//   if (loggedIn || req.url === '/login' || req.url === '/signup'){
+//     next();
+//   }
+//   else {
+//     res.redirect('/login');
+//   }
+// };
+// app.use(checkUser);
 
 app.get('/', 
 function(req, res) {
@@ -75,7 +86,49 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+var loggedIn = true;
 
+app.get('/login', 
+function(req, res) {
+  res.render('login');
+});
+
+app.post('/login',
+function(req, res) {
+  var user = Users.findWhere({username: req.body.username});
+  if(user){
+    var password = user.get('password');
+    if (password === req.body.password){
+      res.redirect('/');
+      loggedIn = true;
+    }
+  }
+  else {
+    res.redirect('/login');
+  }
+});
+
+
+app.get('/signup', 
+function(req, res) {
+  res.render('signup');
+});
+
+app.post('/signup',
+function(req, res) {
+  Users.add(new User({
+    username: req.body.username,
+    password: req.body.password
+  }));
+  res.redirect('/');
+  loggedIn = true;
+});
+
+app.get('/logout', 
+function(req, res) {
+  loggedIn = false;
+  res.redirect('/login');
+});
 
 
 /************************************************************/
