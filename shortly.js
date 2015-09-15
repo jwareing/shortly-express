@@ -2,7 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-
+var session = require('express-session');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -13,6 +13,7 @@ var Click = require('./app/models/click');
 
 var app = express();
 
+app.use( session({secret: 'hello'}) );
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
@@ -24,15 +25,15 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
-// var checkUser = function(req, res, next) {
-//   if (loggedIn || req.url === '/login' || req.url === '/signup'){
-//     next();
-//   }
-//   else {
-//     res.redirect('/login');
-//   }
-// };
-// app.use(checkUser);
+var checkUser = function(req, res, next) {
+  if (loggedIn || req.url === '/login' || req.url === '/signup'){
+    next();
+  }
+  else {
+    res.redirect('/login');
+  }
+};
+app.use(checkUser);
 
 app.get('/', 
 function(req, res) {
@@ -86,7 +87,7 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-var loggedIn = true;
+var loggedIn = false;
 
 app.get('/login', 
 function(req, res) {
@@ -97,11 +98,11 @@ app.post('/login',
 function(req, res) {
   var user = Users.findWhere({username: req.body.username});
   if(user){
-    var password = user.get('password');
-    if (password === req.body.password){
+    if (user.checkPassword(req.body.password)){
       res.redirect('/');
       loggedIn = true;
     }
+    res.redirect('/login');
   }
   else {
     res.redirect('/login');
@@ -116,12 +117,13 @@ function(req, res) {
 
 app.post('/signup',
 function(req, res) {
-  Users.add(new User({
+  Users.create({
     username: req.body.username,
     password: req.body.password
-  }));
-  res.redirect('/');
-  loggedIn = true;
+  }).then(function(){
+    res.redirect('/');
+    loggedIn = true;
+  });
 });
 
 app.get('/logout', 

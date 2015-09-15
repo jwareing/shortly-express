@@ -59,11 +59,11 @@ describe('', function() {
       });
   });
 
-  describe('Link creation:', function(){
+  xdescribe('Link creation:', function(){
 
     var requestWithSession = request.defaults({jar: true});
 
-var beforeEach = function(){
+    var xbeforeEach = function(done){
       // create a user that we can then log-in with
       new User({
           'username': 'Phillip',
@@ -238,7 +238,7 @@ var beforeEach = function(){
 
   }); // 'Priviledged Access'
 
-  xdescribe('Account Creation:', function(){
+  describe('Account Creation:', function(){
 
     it('Signup creates a user record', function(done) {
       var options = {
@@ -260,6 +260,7 @@ var beforeEach = function(){
             expect(user).to.equal('Svnh');
             done();
           }).catch(function(err) {
+            console.log(err);
             throw {
               type: 'DatabaseError',
               message: 'Failed to create test setup data'
@@ -286,7 +287,7 @@ var beforeEach = function(){
 
   }); // 'Account Creation'
 
-  xdescribe('Account Login:', function(){
+  describe('Account Login:', function(){
 
     var requestWithSession = request.defaults({jar: true});
 
