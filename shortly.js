@@ -26,7 +26,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 var checkUser = function(req, res, next) {
-  if (loggedIn || req.url === '/login' || req.url === '/signup'){
+  if (req.session.user || req.url === '/login' || req.url === '/signup'){
     next();
   }
   else {
@@ -81,7 +81,7 @@ function(req, res) {
         });
       });
     }
-  });
+  }).catch(function(err){console.log(err);});
 });
 
 /************************************************************/
@@ -96,16 +96,25 @@ function(req, res) {
 
 app.post('/login',
 function(req, res) {
-  var user = Users.findWhere({username: req.body.username});
-  if(user){
-    if (user.checkPassword(req.body.password)){
-      res.redirect('/');
-      loggedIn = true;
-    }
-    res.redirect('/login');
-  }
-  else {
-    res.redirect('/login');
+  if(req.session.user === req.body.username){
+    res.redirect('/');
+  }else {
+    Users.fetch().then(function(){
+      var user = Users.findWhere({'username': req.body.username});
+      if(user){
+        if (user.checkPassword(req.body.password)){
+          req.session.regenerate(function(){
+            req.session.user = user.get('username');
+            res.redirect('/');
+          });
+        } else {
+          res.redirect('/login');
+        }
+      }
+      else {
+        res.redirect('/login');
+      }
+    }).catch(function(err){console.log(err)});
   }
 });
 
@@ -121,15 +130,18 @@ function(req, res) {
     username: req.body.username,
     password: req.body.password
   }).then(function(){
-    res.redirect('/');
-    loggedIn = true;
+    req.session.regenerate(function(){
+      req.session.user = req.body.username;
+      res.redirect('/');
+    });
   });
 });
 
 app.get('/logout', 
 function(req, res) {
-  loggedIn = false;
-  res.redirect('/login');
+  req.session.destroy(function(err) {
+    res.redirect('/login');
+  });
 });
 
 

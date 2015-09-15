@@ -59,16 +59,16 @@ describe('', function() {
       });
   });
 
-  xdescribe('Link creation:', function(){
+  describe('Link creation:', function(){
 
     var requestWithSession = request.defaults({jar: true});
 
-    var xbeforeEach = function(done){
+    beforeEach(function(done){
       // create a user that we can then log-in with
-      new User({
+      Users.create({
           'username': 'Phillip',
           'password': 'Phillip'
-      }).save().then(function(){
+      }).then(function(){
         var options = {
           'method': 'POST',
           'followAllRedirects': true,
@@ -83,7 +83,7 @@ describe('', function() {
           done();
         });
       });
-    };
+    });
 
     it('Only shortens valid urls, returning a 404 - Not found for invalid urls', function(done) {
       var options = {
@@ -125,11 +125,14 @@ describe('', function() {
           db.knex('urls')
             .where('url', '=', 'http://roflzoo.com/')
             .then(function(urls) {
+
               if (urls['0'] && urls['0']['url']) {
                 var foundUrl = urls['0']['url'];
               }
               expect(foundUrl).to.equal('http://roflzoo.com/');
               done();
+            }).catch(function(err){
+              console.log(err);
             });
         });
       });
